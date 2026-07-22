@@ -9,6 +9,3 @@ class HSNCodeAdmin(admin.ModelAdmin):
     search_fields = ("code", "description")
     list_filter = ("gst_rate", "code_type")
     ordering = ("code",)
-
-def __str__(self):
-     return f"{self.code} - {self.description}"
