@@ -30,8 +30,9 @@ def normalize_code(raw):
     """'0508 .00.10\\xa0' -> '05080010'; returns None if not a real code."""
     if raw is None:
         return None
-    digits = re.sub(r"[^0-9]", "", str(raw))
-    return digits or None
+    digits = re.sub(r"[^0-9]", "", str(raw)) 
+    """anything that is NOT a digit.All of them are replaced with: """""
+    return digits or None   
 
 
 def parse_rate(raw):
@@ -51,10 +52,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("master", help="Path to the HSN/SAC master .xlsx")
+        """Notice there are no dashes.That means this is a required positional argument."""
         parser.add_argument(
             "--rates",
             help="Path to a GST rates .xlsx to merge rates from (goods only)",
         )
+        """dashes mean this is an optional argument. It can be omitted, and if it is, the default value will be None."""
 
     def handle(self, *args, **options):
         try:
