@@ -18,10 +18,10 @@ class HSNCode(models.Model):
     )
 
     embedding = VectorField(
-        dimensions=1536,
-        null=True,
-        blank=True,
-    )
+                        dimensions=384,
+                        null=True,
+                        blank=True,
+                    )
 
     def __str__(self):
         return f"{self.code} - {self.description[:60]}"
