@@ -4,10 +4,33 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from django.core.management.base import BaseCommand
+from django.db import connection
 from hsnManager.models import HSNCode
 from sentence_transformers import SentenceTransformer
 
 model = SentenceTransformer("BAAI/bge-small-en-v1.5")
+
+def get_candidates(query_text):
+    query_embedding = model.encode(
+        "Represent this sentence for searching relevant passages: " + query_text,
+        #Task A:"What does this sentence mean?" Task B: "Which documents should this sentence retrieve?" we're doing B
+        normalize_embeddings=True,
+    ).tolist()
+    query_embedding = "[" + ",".join(map(str, query_embedding)) + "]"
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT id, code, description, gst_rate, code_type
+            FROM "hsnManager_hsncode"
+            WHERE embedding IS NOT NULL
+            ORDER BY embedding <-> %s::vector
+            LIMIT 5
+            """,
+            [query_embedding],
+        )
+        columns = [column[0] for column in cursor.description]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
 class Command(BaseCommand):
     help = "Generate embeddings for HSN descriptions"
