@@ -1,15 +1,13 @@
-from django.db.models import query
-from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from torch import embedding
 from hsnManager.management.commands.generate_embeddings import get_candidates
 from hsnManager.management.commands.generate_embeddings import model
 from .models import HSNCode
 from django.shortcuts import get_object_or_404
 from .utils import rerank
 import time
-
+import pandas as pd
+from django.http import HttpResponse
 # Create your views here.
 
 @api_view(['POST'])
@@ -21,7 +19,6 @@ def classify(request):
     try:
         embed_start = time.perf_counter()
         embedding = model.encode(query).tolist()
-        candidates = get_candidates(embedding)
         embedding_time = time.perf_counter() - embed_start
     except Exception:
         return Response(
@@ -49,13 +46,23 @@ def classify(request):
         ranked = {
         "ranked": [
             {
-                "code": c["code"],
+                "code": ranked["code"][0],
                 "confidence": "Similarity",
                 "reason": "unranked — explanation unavailable"
             }
-            for c in candidates[:3]
+        
         ]
     }
+        return Response({
+            "disclaimer": "Suggestion only. Not a filing-ready GST determination.",
+            "best": candidates[0]["code"],
+            "timing": {
+                "embedding_time": embedding_time,
+                "search_time": search_time,
+                "rerank_time": None,
+                "total_time": time.perf_counter() - start_time
+            }
+        })
 
 @api_view(["GET"])
 
@@ -70,3 +77,47 @@ def hsn_lookup(request, code):
         "description": hsn.description
 
     })
+@api_view(["POST"])
+def classify_bulk(request):
+    start_time = time.perf_counter()
+    csv_file = request.FILES.get("file")
+    if not csv_file:
+        return Response(
+        {"error": "CSV file required"},
+        status=400
+    )
+    
+    df = pd.read_csv(csv_file)
+    if "description" not in df.columns:
+        return Response(
+            {"error": "CSV must contain a 'description' column"},
+            status=400
+        )
+    results = []
+    for _, row in df.iterrows():
+        try:
+            query = row["description"]
+            embedding = model.encode(query).tolist()
+            candidates = get_candidates(embedding)
+            ranked = rerank(query, candidates)
+            best = ranked["ranked"][0]
+            results.append({
+                "description": query,
+                "predicted_code": best["code"],
+                "confidence": best["confidence"],
+                "status": "Success"
+            })
+        except Exception:
+            results.append({
+                "description": query,
+                "predicted_code": "",
+                "confidence": "",
+                "status": "Failed"
+            })
+    output = pd.DataFrame(results)
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="classified_output.csv"'
+    output.to_csv(response, index=False)
+    total_time = time.perf_counter() - start_time
+    response["X-Processing-Time"] = f"{total_time:.2f}"
+    return response
