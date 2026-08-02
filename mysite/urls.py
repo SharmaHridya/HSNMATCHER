@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from hsnManager.views import classify, hsn_lookup
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/classify/', classify, name='classify'),
+    path('api/hsn/<str:code>/', hsn_lookup, name='hsn_lookup'),
 ]
