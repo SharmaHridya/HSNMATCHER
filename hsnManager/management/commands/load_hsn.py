@@ -22,12 +22,15 @@ from hsnManager.models import HSNCode
 
 
 def normalize_code(raw):
-    """Convert values like '0508.00.10' -> '05080010'."""
     if raw is None:
         return None
 
     digits = re.sub(r"[^0-9]", "", str(raw))
-    return digits or None
+
+    if not digits:
+        return None
+
+    return digits.zfill(8)
 
 
 class Command(BaseCommand):

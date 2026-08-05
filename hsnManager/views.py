@@ -1,3 +1,4 @@
+from django.db.models import query
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from hsnManager.management.commands.generate_embeddings import get_candidates
@@ -40,69 +41,91 @@ def correction(request):
 @api_view(['POST'])
 def classify(request):
     start_time = time.perf_counter()
-    query=request.data.get('description')
+
+    query = request.data.get('description')
+
     if not query:
-        return Response({"error": "Description is required."}, status=400)
+        return Response(
+            {"error": "Description is required."},
+            status=400
+        )
+
     try:
         embed_start = time.perf_counter()
         embedding = model.encode(query).tolist()
         embedding_time = time.perf_counter() - embed_start
-    except Exception:
+
+    except Exception as e:
         return Response(
-            {"error": "Embedding service unavailable"},
+            {
+                "error": "Embedding service unavailable",
+                "details": str(e)
+            },
             status=503
         )
-    search_start = time.perf_counter()
-    candidates = get_candidates(embedding)
-    search_time = time.perf_counter() - search_start
-    rerank_start = time.perf_counter()
-    
+
     try:
+        search_start = time.perf_counter()
+        candidates = get_candidates(embedding)
+        print(candidates)
+        search_time = time.perf_counter() - search_start
+
+        rerank_start = time.perf_counter()
         ranked = rerank(query, candidates)
-        predicted = None
-        if ranked["ranked"]:
-            predicted = HSNCode.objects.get(code=ranked["ranked"][0]["code"])
-        classification_query=ClassificationQuery.objects.create(
-                    query_text=query,
-                    embedding=embedding,
-                    predicted_code=predicted,
-                    candidates=candidates,
-                )
         rerank_time = time.perf_counter() - rerank_start
+        predicted = None
+
+        # Get predicted HSN object safely
+        if ranked.get("ranked"):
+            predicted_code = ranked["ranked"][0].get("code")
+
+            try:
+                predicted = HSNCode.objects.get(
+                    code=predicted_code
+                )
+            except HSNCode.DoesNotExist:
+                predicted = None
+
+        classification_query = ClassificationQuery.objects.create(
+            query_text=query,
+            embedding=embedding,
+            predicted_code=predicted,
+            candidates=candidates,
+        )
+
         total_time = time.perf_counter() - start_time
+
         return Response({
             "query_id": classification_query.id,
-            "ranked": ranked["ranked"],
+            "ranked": ranked.get("ranked", []),
             "timing": {
                 "embedding_time": embedding_time,
                 "search_time": search_time,
                 "rerank_time": rerank_time,
                 "total_time": total_time
             }
-        })  
-        
-    except Exception:
-        predicted = None
-        if candidates:
-            predicted = HSNCode.objects.get(code=candidates[0]["code"])
-        classification_query= ClassificationQuery.objects.create(
+        })
+
+    except Exception as e:
+
+        print("CLASSIFY ERROR:", e)
+
+        # Save failed classification also
+        classification_query = ClassificationQuery.objects.create(
             query_text=query,
             embedding=embedding,
-            predicted_code=predicted,
+            predicted_code=None,
             candidates=candidates,
+        )
 
-    )
-        return Response({
-            "query_id":classification_query.id,
-            "disclaimer": "Suggestion only. Not a filing-ready GST determination.",
-            "best": candidates[0]["code"],
-            "timing": {
-                "embedding_time": embedding_time,
-                "search_time": search_time,
-                "rerank_time": None,
-                "total_time": time.perf_counter() - start_time
-            }
-        })
+        return Response(
+            {
+                "error": str(e),
+                "query_id": classification_query.id,
+                "candidates": candidates
+            },
+            status=500
+        )
     
 
 @api_view(["GET"])
@@ -141,13 +164,21 @@ def classify_bulk(request):
             embedding = model.encode(query).tolist()
             candidates = get_candidates(embedding)
             ranked = rerank(query, candidates)
-            best = ranked["ranked"][0]
-            results.append({
-                "description": query,
-                "predicted_code": best["code"],
-                "confidence": best["confidence"],
-                "status": "Success"
-            })
+            if ranked.get("ranked"):
+                best = ranked["ranked"][0]
+                results.append({
+        "description": query,
+        "predicted_code": best["code"],
+        "confidence": best["confidence"],
+        "status": "Success"
+    })
+            else:
+                results.append({
+        "description": query,
+        "predicted_code": "",
+        "confidence": "",
+        "status": "Failed"
+    })
         except Exception:
             results.append({
                 "description": query,

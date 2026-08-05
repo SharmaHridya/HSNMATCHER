@@ -15,7 +15,8 @@ def rerank(query, candidates):
         formatted_candidates += (
             f"Candidate {i}\n"
             f"Code: {candidate['code']}\n"
-            f"Description: {candidate['description']}\n\n"
+            f"Description: {candidate['description']}\n"
+            f"GST Rate: {candidate.get('gst_rate', 'N/A')}\n\n"
         )
 
     prompt = f"""
@@ -35,13 +36,23 @@ Candidate HSN Codes:
 
 Instructions:
 
+IMPORTANT:
+You must return the exact candidate number.
+Do not modify, shorten, format, or generate new codes.
+
 - Rank ONLY the best 3 candidates.
 - Use ONLY the candidates provided.
 - Never invent a new HSN code.
-- For every result provide:
-  - code
-  - confidence (High, Medium, Low)
-  - reason (1-2 concise sentences)
+
+For every result provide:
+- candidate_id (ONLY the number from the candidate list)
+- confidence
+- reason
+
+Do NOT return the HSN code.
+Do NOT return GST rate.
+The application will attach GST rate after ranking.
+
 - If uncertain, choose the closest candidate and lower the confidence.
 - Return ONLY valid JSON.
 - Do not include markdown.
@@ -53,7 +64,7 @@ Return exactly this structure:
 {{
   "ranked": [
     {{
-      "code": "",
+      "candidate_id": 1,
       "confidence": "",
       "reason": ""
     }}
@@ -71,6 +82,37 @@ Return exactly this structure:
         ]
     )
 
-    result = response["message"]["content"]
+    result = json.loads(response["message"]["content"])
 
-    return json.loads(result)
+    final_ranked = []
+
+    for item in result.get("ranked", []):
+
+        if "candidate_id" in item:
+            candidate_id = item["candidate_id"]
+
+            if isinstance(candidate_id, int) and 1 <= candidate_id <= len(candidates):
+                selected_candidate = candidates[candidate_id - 1]
+
+                item["code"] = selected_candidate["code"]
+                item["gst_rate"] = selected_candidate.get("gst_rate")
+
+        elif "code" in item:
+            item["gst_rate"] = next(
+                (
+                    candidate.get("gst_rate")
+                    for candidate in candidates
+                    if candidate["code"] == item["code"]
+                ),
+                None
+            )
+
+        else:
+            continue
+
+        item.pop("candidate_id", None)
+        final_ranked.append(item)
+
+    result["ranked"] = final_ranked
+
+    return result

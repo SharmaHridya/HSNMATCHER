@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 from django.core.management.base import BaseCommand
@@ -25,8 +26,14 @@ def get_candidates(query_embedding):
             [query_embedding],
         )
         columns = [column[0] for column in cursor.description]
-        return [dict(zip(columns, row)) for row in cursor.fetchall()]
-
+        results = []
+        for row in cursor.fetchall():
+            item = dict(zip(columns, row))
+            if item["gst_rate"] is not None:
+                item["gst_rate"] = float(item["gst_rate"])
+            results.append(item)
+        return results
+    
 class Command(BaseCommand):
     help = "Generate embeddings for HSN descriptions"
 
