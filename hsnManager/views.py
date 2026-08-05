@@ -8,8 +8,34 @@ from .utils import rerank
 import time
 import pandas as pd
 from django.http import HttpResponse
-from .models import ClassificationQuery
+from .models import ClassificationQuery, ClassificationCorrection
 # Create your views here.
+@api_view(["POST"])
+def correction(request):
+    query_id = request.data.get("query_id")
+    submitted_code = request.data.get("submitted_code")
+
+    if not query_id or not submitted_code:
+        return Response(
+            {"error": "query_id and submitted_code are required"},
+            status=400
+        )
+
+    query = get_object_or_404(
+        ClassificationQuery,
+        id=query_id
+    )
+
+    correction = ClassificationCorrection.objects.create(
+        query=query,
+        submitted_code=submitted_code
+    )
+
+    return Response({
+        "message": "Correction saved",
+        "query_id": query.id,
+        "submitted_code": correction.submitted_code
+    })
 
 @api_view(['POST'])
 def classify(request):
@@ -36,7 +62,7 @@ def classify(request):
         predicted = None
         if ranked["ranked"]:
             predicted = HSNCode.objects.get(code=ranked["ranked"][0]["code"])
-        ClassificationQuery.objects.create(
+        classification_query=ClassificationQuery.objects.create(
                     query_text=query,
                     embedding=embedding,
                     predicted_code=predicted,
@@ -45,6 +71,7 @@ def classify(request):
         rerank_time = time.perf_counter() - rerank_start
         total_time = time.perf_counter() - start_time
         return Response({
+            "query_id": classification_query.id,
             "ranked": ranked["ranked"],
             "timing": {
                 "embedding_time": embedding_time,
@@ -58,7 +85,7 @@ def classify(request):
         predicted = None
         if candidates:
             predicted = HSNCode.objects.get(code=candidates[0]["code"])
-        ClassificationQuery.objects.create(
+        classification_query= ClassificationQuery.objects.create(
             query_text=query,
             embedding=embedding,
             predicted_code=predicted,
@@ -66,6 +93,7 @@ def classify(request):
 
     )
         return Response({
+            "query_id":classification_query.id,
             "disclaimer": "Suggestion only. Not a filing-ready GST determination.",
             "best": candidates[0]["code"],
             "timing": {
