@@ -8,6 +8,7 @@ from .utils import rerank
 import time
 import pandas as pd
 from django.http import HttpResponse
+from .models import ClassificationQuery
 # Create your views here.
 
 @api_view(['POST'])
@@ -29,8 +30,18 @@ def classify(request):
     candidates = get_candidates(embedding)
     search_time = time.perf_counter() - search_start
     rerank_start = time.perf_counter()
+    
     try:
         ranked = rerank(query, candidates)
+        predicted = None
+        if ranked["ranked"]:
+            predicted = HSNCode.objects.get(code=ranked["ranked"][0]["code"])
+        ClassificationQuery.objects.create(
+                    query_text=query,
+                    embedding=embedding,
+                    predicted_code=predicted,
+                    candidates=candidates,
+                )
         rerank_time = time.perf_counter() - rerank_start
         total_time = time.perf_counter() - start_time
         return Response({
@@ -41,18 +52,19 @@ def classify(request):
                 "rerank_time": rerank_time,
                 "total_time": total_time
             }
-        })
-    except Exception:
-        ranked = {
-        "ranked": [
-            {
-                "code": ranked["code"][0],
-                "confidence": "Similarity",
-                "reason": "unranked — explanation unavailable"
-            }
+        })  
         
-        ]
-    }
+    except Exception:
+        predicted = None
+        if candidates:
+            predicted = HSNCode.objects.get(code=candidates[0]["code"])
+        ClassificationQuery.objects.create(
+            query_text=query,
+            embedding=embedding,
+            predicted_code=predicted,
+            candidates=candidates,
+
+    )
         return Response({
             "disclaimer": "Suggestion only. Not a filing-ready GST determination.",
             "best": candidates[0]["code"],
@@ -63,6 +75,7 @@ def classify(request):
                 "total_time": time.perf_counter() - start_time
             }
         })
+    
 
 @api_view(["GET"])
 
@@ -117,7 +130,7 @@ def classify_bulk(request):
     output = pd.DataFrame(results)
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = 'attachment; filename="classified_output.csv"'
-    output.to_csv(response, index=False)
+    response.write(output.to_csv(index=False))
     total_time = time.perf_counter() - start_time
     response["X-Processing-Time"] = f"{total_time:.2f}"
     return response
