@@ -18,7 +18,7 @@ export default function ResultCard({ result, rank, isUnranked, queryId }) {
       <p className="mt-4 pl-2 text-sm leading-6 text-slate-700">{result.description}</p>
       <div className="mt-5 grid gap-3 border-t border-stone-100 pt-4 pl-2 sm:grid-cols-[auto_1fr] sm:items-start">
         <div><span className="text-xs font-bold uppercase tracking-[0.12em] text-sage-500">GST rate</span><p className="mt-1 text-lg font-bold text-ink">{result.gst_rate ?? '—'}</p></div>
-        <div className="sm:border-l sm:border-stone-200 sm:pl-4"><span className="text-xs font-bold uppercase tracking-[0.12em] text-sage-500">Why this match</span><p className="mt-1 text-sm leading-5 text-slate-600">{isUnranked ? 'Explanation unavailable. Displaying similarity-search results only.' : result.reasoning || 'No explanation was returned for this recommendation.'}</p></div>
+        <div className="sm:border-l sm:border-stone-200 sm:pl-4"><span className="text-xs font-bold uppercase tracking-[0.12em] text-sage-500">Why this match</span><p className="mt-1 text-sm leading-5 text-slate-600">{isUnranked ? 'Explanation unavailable. Displaying similarity-search results only.' : result.reason || 'No explanation was returned for this recommendation.'}</p></div>
       </div>
       <div className="mt-5 border-t border-stone-100 pt-4 pl-2">
         <button type="button" onClick={() => setShowCorrection((value) => !value)} className="text-sm font-semibold text-sage-700 transition hover:text-ink">
