@@ -35,6 +35,18 @@ Candidate HSN Codes:
 {formatted_candidates}
 
 Instructions:
+You must respond ONLY in English.
+
+Return valid JSON.
+
+The confidence field must be one of:
+"95", "90", "85"
+or
+"High", "Medium", "Low"
+
+The reason must be written in English.
+
+Do not use any other language.
 
 IMPORTANT:
 You must return the exact candidate number.
