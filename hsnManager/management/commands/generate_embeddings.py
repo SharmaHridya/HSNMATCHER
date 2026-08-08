@@ -18,7 +18,7 @@ def get_candidates(query_embedding):
         cursor.execute(
             """
             SELECT code, description, gst_rate, embedding <-> %s::vector AS distance
-            FROM hsnManager_hsncode
+            FROM "hsnManager_hsncode"
             ORDER BY embedding <-> %s::vector
             LIMIT 5;
             """,
