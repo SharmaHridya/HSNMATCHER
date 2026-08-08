@@ -67,7 +67,14 @@ def classify(request):
     try:
         search_start = time.perf_counter()
         candidates = get_candidates(embedding)
-        print(candidates)
+        DISTANCE_THRESHOLD = 0.65  # Tune this experimentally
+        if not candidates or candidates[0]["distance"] > DISTANCE_THRESHOLD:
+            return Response({
+        "query_id": None,
+        "ranked": [],
+        "status": "no_confident_match",
+        "message": "No sufficiently similar HSN/SAC code found. Please provide a more specific product description."
+    })
         search_time = time.perf_counter() - search_start
 
         rerank_start = time.perf_counter()

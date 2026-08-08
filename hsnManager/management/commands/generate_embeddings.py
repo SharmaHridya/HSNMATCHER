@@ -17,13 +17,12 @@ def get_candidates(query_embedding):
     with connection.cursor() as cursor:
         cursor.execute(
             """
-            SELECT id, code, description, gst_rate, code_type
-            FROM "hsnManager_hsncode"
-            WHERE embedding IS NOT NULL
+            SELECT code, description, gst_rate, embedding <-> %s::vector AS distance
+            FROM hsnManager_hsncode
             ORDER BY embedding <-> %s::vector
-            LIMIT 5
+            LIMIT 5;
             """,
-            [query_embedding],
+            [query_embedding,query_embedding],
         )
         columns = [column[0] for column in cursor.description]
         results = []
