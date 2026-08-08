@@ -40,6 +40,7 @@ def correction(request):
 
 @api_view(['POST'])
 def classify(request):
+    print("CLASSIFY START")
     candidates = []
     start_time = time.perf_counter()
 
@@ -69,7 +70,8 @@ def classify(request):
         search_start = time.perf_counter()
         candidates = get_candidates(embedding)
         print(candidates)
-        DISTANCE_THRESHOLD = 0.65  # Tune this experimentally
+        DISTANCE_THRESHOLD = 0.70
+         # Tune this experimentally
         if not candidates or candidates[0]["distance"] > DISTANCE_THRESHOLD:
             return Response({
         "query_id": None,
@@ -103,6 +105,7 @@ def classify(request):
         )
 
         total_time = time.perf_counter() - start_time
+        print("CLASSIFY RETURN")
 
         return Response({
             "query_id": classification_query.id,

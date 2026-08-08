@@ -27,7 +27,6 @@ export default function ClassifyPage({ onDisclaimer }) {
 
     try {
       const response = await classifyDescription(description.trim())
-      console.log(response)
       const responseResults = response.ranked || []
       setResults(responseResults)
       setQueryId(response.query_id || null)
