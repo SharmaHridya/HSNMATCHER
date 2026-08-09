@@ -164,6 +164,11 @@ def classify_bulk(request):
     )
     
     df = pd.read_csv(csv_file)
+    if df.empty:
+        return Response(
+        {"error": "CSV contains no data rows."},
+        status=400
+    )
     if "description" not in df.columns:
         return Response(
             {"error": "CSV must contain a 'description' column"},
