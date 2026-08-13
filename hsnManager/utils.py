@@ -1,5 +1,10 @@
 import json
-from ollama import chat
+import os
+from ollama import Client
+
+client = Client(
+    host=os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+)
 
 
 def rerank(query, candidates):
@@ -84,15 +89,15 @@ Return exactly this structure:
 }}
 """
 
-    response = chat(
-        model="qwen2.5:3b",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
+    response = client.chat(
+    model="qwen2.5:3b",
+    messages=[
+        {
+            "role": "user",
+            "content": prompt
+        }
+    ]
+)
 
     result = json.loads(response["message"]["content"])
 
