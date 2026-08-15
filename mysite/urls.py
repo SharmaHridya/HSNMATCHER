@@ -22,7 +22,7 @@ from hsnManager.views import classify, hsn_lookup,classify_bulk
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/classify/', classify, name='classify'),
-    path('api/classify_bulk/', classify_bulk, name='classify_bulk'),
+    path('api/classify/bulk/', classify_bulk, name='classify_bulk'),
     path('api/hsn/<str:code>/', hsn_lookup, name='hsn_lookup'),
     path('api/hsn/', hsn_lookup, name='hsn_lookup_no_code'),  # Optional code parameter
     path(

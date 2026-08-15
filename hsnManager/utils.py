@@ -110,7 +110,6 @@ Return exactly this structure:
 
             if isinstance(candidate_id, int) and 1 <= candidate_id <= len(candidates):
                 selected_candidate = candidates[candidate_id - 1]
-
                 item["code"] = selected_candidate["code"]
                 item["gst_rate"] = selected_candidate.get("gst_rate")
 
