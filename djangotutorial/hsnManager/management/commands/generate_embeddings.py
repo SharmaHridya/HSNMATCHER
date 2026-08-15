@@ -1,4 +1,4 @@
-from xml.parsers.expat import model
+
 
 from django.utils import text
 from dotenv import load_dotenv
@@ -8,7 +8,6 @@ from django.core.management.base import BaseCommand
 from django.db import connection
 from hsnManager.models import HSNCode
 from sentence_transformers import SentenceTransformer
-from hsnManager.management.commands.generate_embeddings import get_model
 _model = None
 
 def get_model():
