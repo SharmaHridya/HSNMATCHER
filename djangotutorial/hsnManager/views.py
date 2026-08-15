@@ -1,8 +1,10 @@
 from django.db.models import query
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from hsnManager.management.commands.generate_embeddings import get_candidates
-from hsnManager.management.commands.generate_embeddings import model
+from hsnManager.management.commands.generate_embeddings import (
+    get_candidates,
+    get_model,
+)
 from .models import HSNCode
 from django.shortcuts import get_object_or_404
 from .utils import rerank
@@ -54,7 +56,7 @@ def classify(request):
 
     try:
         embed_start = time.perf_counter()
-        embedding = model.encode(query).tolist()
+        embedding = get_model().encode(query).tolist()
         embedding_time = time.perf_counter() - embed_start
 
     except Exception as e:
@@ -178,7 +180,7 @@ def classify_bulk(request):
     for _, row in df.iterrows():
         try:
             query = row["description"]
-            embedding = model.encode(query).tolist()
+            embedding = get_model().encode(query).tolist()
             candidates = get_candidates(embedding)
             ranked = rerank(query, candidates)
             if ranked.get("ranked"):

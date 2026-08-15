@@ -1,3 +1,6 @@
+from xml.parsers.expat import model
+
+from django.utils import text
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -5,7 +8,7 @@ from django.core.management.base import BaseCommand
 from django.db import connection
 from hsnManager.models import HSNCode
 from sentence_transformers import SentenceTransformer
-
+from hsnManager.management.commands.generate_embeddings import get_model
 _model = None
 
 def get_model():
@@ -45,7 +48,8 @@ class Command(BaseCommand):
 
         for row in rows:
             try:
-                embedding = model.encode(row.description, normalize_embeddings=True)
+                model = get_model()
+                embedding = model.encode(text, normalize_embeddings=True)
                 row.embedding = embedding.tolist()
                 row.save(update_fields=["embedding"])
                 self.stdout.write(f"Embedded {row.code}")
