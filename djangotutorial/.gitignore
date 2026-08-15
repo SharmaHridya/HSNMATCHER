@@ -1,0 +1,19 @@
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# SQLite database (optional)
+db.sqlite3
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+HSN_SAC.xlsx
