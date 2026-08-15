@@ -1,6 +1,4 @@
 
-
-from django.utils import text
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -47,8 +45,7 @@ class Command(BaseCommand):
 
         for row in rows:
             try:
-                model = get_model()
-                embedding = model.encode(text, normalize_embeddings=True)
+                embedding = model.encode(row.description, normalize_embeddings=True)
                 row.embedding = embedding.tolist()
                 row.save(update_fields=["embedding"])
                 self.stdout.write(f"Embedded {row.code}")
