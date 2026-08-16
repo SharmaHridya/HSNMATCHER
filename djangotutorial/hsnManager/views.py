@@ -144,7 +144,10 @@ def classify(request):
 
 @api_view(["GET"])
 
-def hsn_lookup(request, code):
+def hsn_lookup(request, code=None):
+    if code is None:
+        # handle the "no code provided" case — e.g. return a list, or a 400
+        return Response({"detail": "code parameter is required"}, status=400)
 
     hsn = get_object_or_404(
         HSNCode,
