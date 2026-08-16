@@ -33,7 +33,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "backend",
-    ["hsnmatcher.onrender.com"]   
+    "hsnmatcher.onrender.com",
 ]
 
 # Application definition
