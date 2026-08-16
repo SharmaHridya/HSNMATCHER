@@ -1,0 +1,4 @@
+[build]
+  base = "djangotutorial/frontend"
+  publish = "djangotutorial/frontend/dist"
+  command = "npm run build"
