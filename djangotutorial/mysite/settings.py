@@ -27,7 +27,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = "FALSE"
+DEBUG = os.getenv("DEBUG", "False") == "True"
+CSRF_TRUSTED_ORIGINS = ["https://hsnmatcher.netlify.app"]
+CORS_ALLOW_CREDENTIALS = True
+
 
 ALLOWED_HOSTS = [
     "localhost",
@@ -113,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = ["https://hsnmatcher.netlify.app"]
+CORS_ALLOWED_ORIGINS = ["https://hsnmatcher.netlify.app",]
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
