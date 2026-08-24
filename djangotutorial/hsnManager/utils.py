@@ -3,7 +3,8 @@ import os
 from ollama import Client
 
 client = Client(
-    host=os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+    host=os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434"),
+    headers={"Authorization": f"Bearer {os.getenv('OLLAMA_API_KEY')}"}
 )
 
 
@@ -90,7 +91,7 @@ Return exactly this structure:
 """
 
     response = client.chat(
-    model="qwen2.5:3b",
+    model="gpt-oss:20b-cloud",
     messages=[
         {
             "role": "user",
