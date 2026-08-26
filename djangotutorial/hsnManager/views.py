@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from hsnManager.management.commands.generate_embeddings import (
     get_candidates,
-    get_model,
+    get_embedding,
 )
 from .models import HSNCode
 from django.shortcuts import get_object_or_404
@@ -56,7 +56,7 @@ def classify(request):
 
     try:
         embed_start = time.perf_counter()
-        embedding = get_model().encode(query).tolist()
+        embedding = get_embedding(query)
         embedding_time = time.perf_counter() - embed_start
 
     except Exception as e:
@@ -183,7 +183,7 @@ def classify_bulk(request):
     for _, row in df.iterrows():
         try:
             query = row["description"]
-            embedding = get_model().encode(query).tolist()
+            embedding = get_embedding(query)
             candidates = get_candidates(embedding)
             ranked = rerank(query, candidates)
             if ranked.get("ranked"):

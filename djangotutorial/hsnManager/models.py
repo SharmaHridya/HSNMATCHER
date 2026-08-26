@@ -17,7 +17,7 @@ class HSNCode(models.Model):
         max_length=3,
     )
     embedding = VectorField(
-                        dimensions=384,
+                        dimensions=768,
                         null=True,
                         blank=True,
                     )
