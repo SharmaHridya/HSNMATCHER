@@ -3,7 +3,7 @@ import os
 from ollama import Client
 
 client = Client(
-    host=os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434"),
+    host=os.getenv("OLLAMA_HOST", "https://ollama.com"),
     headers={"Authorization": f"Bearer {os.getenv('OLLAMA_API_KEY')}"},
     timeout=25
 )

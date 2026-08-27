@@ -38,7 +38,7 @@ class ClassificationQuery(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     embedding = VectorField(
-    dimensions=384,
+    dimensions=768,
     null=True,
     blank=True,
 )
