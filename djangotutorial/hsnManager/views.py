@@ -72,7 +72,7 @@ def classify(request):
         search_start = time.perf_counter()
         candidates = get_candidates(embedding)
         print(candidates)
-        DISTANCE_THRESHOLD = 0.70
+        DISTANCE_THRESHOLD = 0.85
          # Tune this experimentally
         if not candidates or candidates[0]["distance"] > DISTANCE_THRESHOLD:
             return Response({
