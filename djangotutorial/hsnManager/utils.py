@@ -9,6 +9,52 @@ client = Client(
 )
 
 
+def _confidence_from_distance(distance):
+    """Map pgvector L2 distance to the High/Medium/Low labels the UI understands.
+
+    classify() already rejects anything above 0.85, so the bands sit below that.
+    """
+    if distance <= 0.70:
+        return "High"
+    if distance <= 0.84:
+        return "Medium"
+    return "Low"
+
+
+def fallback_rank(candidates, top_n=3):
+    """
+    Rank candidates by vector distance alone, in the same shape rerank() returns.
+    Used when the LLM re-ranker is unavailable (e.g. Ollama out of credits).
+    """
+    ranked = []
+    for candidate in sorted(candidates, key=lambda c: c["distance"])[:top_n]:
+        distance = float(candidate["distance"])
+        ranked.append({
+            "code": candidate["code"],
+            "gst_rate": candidate.get("gst_rate"),
+            "confidence": _confidence_from_distance(distance),
+            # Jina embeddings are unit-length, so cosine similarity = 1 - d^2 / 2.
+            "similarity": round(max(0.0, 1 - distance ** 2 / 2), 3),
+            "reason": "Closest match by meaning from vector search (AI re-ranking is currently unavailable).",
+        })
+    return {"ranked": ranked}
+
+
+def rerank_or_fallback(query, candidates):
+    """Try the LLM re-ranker; on any failure fall back to vector-distance ranking.
+
+    Returns (result, used_fallback).
+    """
+    try:
+        result = rerank(query, candidates)
+        if result.get("ranked"):
+            return result, False
+        print("RERANK RETURNED NO RESULTS, USING FALLBACK")
+    except Exception as e:
+        print("RERANK FAILED, USING FALLBACK:", e)
+    return fallback_rank(candidates), True
+
+
 def rerank(query, candidates):
     """
     Re-rank the top pgvector candidates using Gemma.

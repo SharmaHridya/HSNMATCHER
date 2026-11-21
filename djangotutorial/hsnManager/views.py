@@ -7,7 +7,7 @@ from hsnManager.management.commands.generate_embeddings import (
 )
 from .models import HSNCode
 from django.shortcuts import get_object_or_404
-from .utils import rerank
+from .utils import rerank_or_fallback
 import time
 import pandas as pd
 from django.http import HttpResponse
@@ -84,7 +84,7 @@ def classify(request):
         search_time = time.perf_counter() - search_start
 
         rerank_start = time.perf_counter()
-        ranked = rerank(query, candidates)
+        ranked, used_fallback = rerank_or_fallback(query, candidates)
         rerank_time = time.perf_counter() - rerank_start
         predicted = None
 
@@ -112,6 +112,7 @@ def classify(request):
         return Response({
             "query_id": classification_query.id,
             "ranked": ranked.get("ranked", []),
+            "rerank_fallback": used_fallback,
             "timing": {
                 "embedding_time": embedding_time,
                 "search_time": search_time,
@@ -185,7 +186,7 @@ def classify_bulk(request):
             query = row["description"]
             embedding = get_embedding(query)
             candidates = get_candidates(embedding)
-            ranked = rerank(query, candidates)
+            ranked, _ = rerank_or_fallback(query, candidates) if candidates else ({"ranked": []}, True)
             if ranked.get("ranked"):
                 best = ranked["ranked"][0]
                 results.append({
