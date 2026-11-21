@@ -49,8 +49,8 @@ export default function ResultCard({ result, rank, isUnranked, queryId }) {
 
       <div className="mt-5 flex items-end justify-between border-t border-border pt-4">
         <div>
-          <p className="eyebrow">GST rate</p>
-          <p className="mt-1 font-mono text-lg font-medium text-primary">{result.gst_rate ?? '—'}</p>
+          <p className="eyebrow" title="Chapter-level estimate, not a verified per-code rate">GST rate (est.)</p>
+          <p className="mt-1 font-mono text-lg font-medium text-primary">{result.gst_rate != null ? `${result.gst_rate}%` : '—'}</p>
         </div>
         {!isUnranked && <SimilarityGauge score={result.similarity ?? result.score ?? (confidence === 'high' ? 0.92 : confidence === 'medium' ? 0.73 : 0.54)} delay={0.5} />}
       </div>

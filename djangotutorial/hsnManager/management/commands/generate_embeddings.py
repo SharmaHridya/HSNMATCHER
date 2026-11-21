@@ -6,6 +6,7 @@ load_dotenv()
 from django.core.management.base import BaseCommand
 from django.db import connection
 from hsnManager.models import HSNCode
+from hsnManager.gst_rates import estimated_gst_rate
 
 JINA_URL = "https://api.jina.ai/v1/embeddings"
 
@@ -43,8 +44,9 @@ def get_candidates(query_embedding):
         results = []
         for row in cursor.fetchall():
             item = dict(zip(columns, row))
-            if item["gst_rate"] is not None:
-                item["gst_rate"] = float(item["gst_rate"])
+            # The stored gst_rate column holds chapter numbers (see gst_rates.py),
+            # so use the chapter-level estimate instead.
+            item["gst_rate"] = estimated_gst_rate(item["code"])
             results.append(item)
         return results
 

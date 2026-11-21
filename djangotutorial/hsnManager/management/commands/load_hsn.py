@@ -57,11 +57,14 @@ class Command(BaseCommand):
         seen = set()
         skipped = 0
 
-        for raw_code, raw_desc, raw_rate in worksheet.iter_rows(
+        # Columns: A code, B description, C chapter, D GST rate (e.g. "18%").
+        for raw_code, raw_desc, _chapter, raw_rate in worksheet.iter_rows(
             min_row=2,
-            max_col=3,
+            max_col=4,
             values_only=True,
         ):
+            if isinstance(raw_rate, str):
+                raw_rate = raw_rate.strip().rstrip("%") or None
             code = normalize_code(raw_code)
             desc = " ".join(str(raw_desc).split()) if raw_desc else ""
 

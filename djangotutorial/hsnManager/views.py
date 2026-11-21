@@ -8,6 +8,7 @@ from hsnManager.management.commands.generate_embeddings import (
 from .models import HSNCode
 from django.shortcuts import get_object_or_404
 from .utils import rerank_or_fallback
+from .gst_rates import estimated_gst_rate
 import time
 import pandas as pd
 from django.http import HttpResponse
@@ -72,8 +73,11 @@ def classify(request):
         search_start = time.perf_counter()
         candidates = get_candidates(embedding)
         print(candidates)
-        DISTANCE_THRESHOLD = 0.85
-         # Tune this experimentally
+        # Tuned on 40 everyday product queries (Nov 2026): at 0.85 casual phrasing
+        # like "cotton t-shirt" or "mobile phone" was rejected even when the top
+        # candidate was correct (distance ~0.85-0.95). 0.95 admits those while
+        # still rejecting clearly wrong matches (e.g. "football" -> fish, ~0.97).
+        DISTANCE_THRESHOLD = 0.95
         if not candidates or candidates[0]["distance"] > DISTANCE_THRESHOLD:
             return Response({
         "query_id": None,
@@ -156,8 +160,8 @@ def hsn_lookup(request, code=None):
     )
     return Response({
         "code": hsn.code,
-        "description": hsn.description
-
+        "description": hsn.description,
+        "gst_rate": estimated_gst_rate(hsn.code),
     })
 @api_view(["POST"])
 def classify_bulk(request):
